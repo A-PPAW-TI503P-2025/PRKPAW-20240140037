@@ -10,6 +10,20 @@ const getBooks = (req, res) => {
     });
 };
 
+const getBooksById = (req, res) =>{
+    const id = req.params.id;
+    const query = `SELECT * FROM books WHERE id = ?`;
+    db.get(query, [id], (err, row) => {
+        if (err) {
+            return res.status(500).send('Error retrieving book');
+        }
+        if (!row) {
+            return res.status(404).send('Book not found');
+        }
+        res.status(200).json(row);
+    });
+}
+
 const addBooks = (req, res) => {
     const { title, author } = req.body;
 
@@ -60,4 +74,4 @@ const deleteBook = (req, res) => {
     });
 }
 
-module.exports = { getBooks, addBooks, updateBook, deleteBook };
+module.exports = { getBooks, addBooks, updateBook, deleteBook, getBooksById };
