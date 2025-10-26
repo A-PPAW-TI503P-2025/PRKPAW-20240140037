@@ -1,6 +1,6 @@
 const router = require('express').Router();
-const { getDailyReport } = require('../controllers/reportController')
+const { getAllRecords } = require('../controllers/reportController')
 
-router.get('/daily', getDailyReport)
+router.get('/daily', getAllRecords)
 
 module.exports = router

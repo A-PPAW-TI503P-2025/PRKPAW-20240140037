@@ -1,10 +1,20 @@
-const presensiRecords = require('../data/presensiData');
+const { Presensi } = require('../models');
 
-const getDailyReport = (req, res) => {
-    res.json({
-        reportDate: new Date().toLocaleDateString(),
-        records: presensiRecords
-    });
+const getAllRecords = async (req, res) => {
+    try {
+        const records = await Presensi.findAll();
+        res.json({
+            success: true,
+            data: records
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            success: false, 
+            message: "Terjadi kesalahan pada server", 
+            error: error.message 
+        });
+    }
 };
 
-module.exports = { getDailyReport };
+
+module.exports = {getAllRecords };
