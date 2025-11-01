@@ -1,6 +1,7 @@
 const { Presensi } = require('../models');
 const { format } = require('date-fns');
 const timeZone = 'Asia/Jakarta';
+const { body } = require('express-validator');
 
 const CheckIn = async(req, res) => {
     try {
@@ -85,4 +86,70 @@ const CheckOut = async(req, res) => {
     }
 };
 
-module.exports = { CheckIn, CheckOut };
+const deletePresensi = async (req, res) => {
+    try {
+        const { id: userId } = req.user;
+        const presensiId = req.params.id;
+        const recordToDelete = await Presensi.findByPk(presensiId);
+
+        if (!recordToDelete) {
+        return res
+            .status(404)
+            .json({ message: "Catatan presensi tidak ditemukan." });
+        }
+        if (recordToDelete.userId !== userId) {
+        return res
+            .status(403)
+            .json({ message: "Akses ditolak: Anda bukan pemilik catatan ini." });
+        }
+        await recordToDelete.destroy();
+        res.status(204).send();
+    }
+    catch(error){
+        res.status(500).json({message: "Terjadi Interval Server Erorr", erorr: error})
+    }
+}
+
+const updatePresensi = async (req, res) => {
+    try {
+        const presensiId = req.params.id;
+        const { checkIn, checkOut, nama } = req.body;
+        if (checkIn === undefined && checkOut === undefined && nama === undefined) {
+        return res.status(400).json({
+            message:
+            "Request body tidak berisi data yang valid untuk diupdate (checkIn, checkOut, atau nama).",
+        });
+        }
+        
+        if (checkIn && isNaN(new Date(checkIn).getTime())) {
+        return res.status(400).json({ message: "Format checkIn tidak valid." });
+        }
+        if (checkOut && isNaN(new Date(checkOut).getTime())) {
+        return res.status(400).json({ message: "Format checkOut tidak valid." });
+        }
+
+        const recordToUpdate = await Presensi.findByPk(presensiId);
+        if (!recordToUpdate) {
+        return res
+            .status(404)
+            .json({ message: "Catatan presensi tidak ditemukan." });
+        }
+        recordToUpdate.checkIn = checkIn || recordToUpdate.checkIn;
+        recordToUpdate.checkOut = checkOut || recordToUpdate.checkOut;
+        recordToUpdate.nama = nama || recordToUpdate.nama;
+        await recordToUpdate.save();
+
+        res.json({
+        message: "Data presensi berhasil diperbarui.",
+        data: recordToUpdate,
+        });
+    } catch (error) {
+        res
+        .status(500)
+        .json({ message: "Terjadi kesalahan pada server", error: error.message });
+    }
+};
+
+
+
+module.exports = { CheckIn, CheckOut, deletePresensi, updatePresensi };

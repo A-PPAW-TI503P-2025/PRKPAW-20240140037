@@ -6,8 +6,8 @@ const checkAuth = (req, res, next) => {
 const addUserData = (req, res, next) => {
     console.log('Middleware: Menambahkan User Data Dummy...');
     req.user = {
-        id: 123,
-        nama: 'User Karyawan',
+        id: 1,
+        nama: 'Ridho',
         role: 'admin'
     };
     next();
