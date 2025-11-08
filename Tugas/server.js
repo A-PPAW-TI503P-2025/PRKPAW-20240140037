@@ -3,18 +3,22 @@ const app = express();
 const port = 6000;
 
 require('./helpers/db');
+const cookieParser = require('cookie-parser');
 
-const { checkAuth, addUserData, isAdmin } = require('./middleware/check');
+const { checkAuth, isAdmin, addUserData } = require('./middleware/check');
 
 const booksRouter = require('./routes/books');
 const presensiRouter = require('./routes/presensi');
 const reportRouter = require('./routes/reports')
+const authRouter = require('./routes/auth')
 
 app.use(express.json());
+app.use(cookieParser());
 
-app.use('/api/books', checkAuth, booksRouter);
-app.use('/api/presensi', [checkAuth, addUserData] ,presensiRouter);
-app.use('/api/report', [checkAuth, addUserData, isAdmin], reportRouter)
+app.use('/api/books', checkAuth, addUserData, booksRouter);
+app.use('/api/presensi', [checkAuth, addUserData], presensiRouter);
+app.use('/api/report', [checkAuth, addUserData, isAdmin], reportRouter);
+app.use('/api/auth', authRouter);
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
