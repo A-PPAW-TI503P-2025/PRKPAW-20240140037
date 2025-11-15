@@ -1,9 +1,12 @@
 const express = require('express');
 const app = express();
-const port = 6000;
+const port = 3001;
 
 require('./helpers/db');
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
+
+app.use(cors());
 
 const { checkAuth, isAdmin, addUserData } = require('./middleware/check');
 

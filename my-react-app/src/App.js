@@ -1,39 +1,27 @@
-import React, { useState } from 'react';
-import './App.css';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import LoginPage from './components/loginPage';
+import RegisterPage from './components/registerPage';
+import DashboardPage from './components/dashboardPage';
 
 function App() {
-  const [nama, setNama] = useState('');
-  const [pesan, setPesan] = useState('');
-
-  
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    if (nama) {
-      setPesan(`Hello, ${nama}!`);
-    }
-  };
-
   return (
-    <div className="App">
-      <header className="App-header">
-        {!pesan ? (
-          <form onSubmit={handleSubmit}>
-            <h1>Masukkan Nama Anda</h1>
-            <input
-              type="text"
-              value={nama}
-              onChange={(e) => setNama(e.target.value)}
-              placeholder="Ketik nama di sini..."
-              required
-            />
-            <button type="submit">Kirim</button>
-          </form>
-        ) : (
-          <h1>{pesan}</h1>
-        )}
-      </header>
-    </div>
+    <Router>
+      <div>
+        {/* Navigasi ini bisa dihapus jika tidak diperlukan */}
+        <nav className="p-4 bg-gray-100">
+          <Link to="/login" className="mr-4">Login</Link>
+          <Link to="/register">Register</Link>
+        </nav>
+        
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/" element={<LoginPage />} /> 
+        </Routes>
+      </div>
+    </Router>
   );
 }
-
 export default App;
