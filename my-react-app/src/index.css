@@ -1,3 +1,5 @@
+@import 'leaflet/dist/leaflet.css';
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -11,3 +13,17 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Ensure popup overlay always appears above Leaflet map */
+.leaflet-container {
+  z-index: 0 !important;
+}
+
+.leaflet-popup {
+  z-index: 1 !important;
+}
+
+.leaflet-control {
+  z-index: 2 !important;
+}
+

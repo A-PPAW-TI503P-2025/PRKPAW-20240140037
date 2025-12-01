@@ -7,11 +7,15 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       userId: {
         type: Sequelize.INTEGER,
-        allowNull: false
+        allowNull: false,
+        references:{
+          model:'Users',
+          key:'id'
+        }
       },
       nama: {
         type: Sequelize.STRING,
@@ -24,6 +28,14 @@ module.exports = {
       checkOut: {
         allowNull: true, // checkOut bisa kosong saat pertama kali check-in
         type: Sequelize.DATE
+      },
+      latitude: {
+        type: Sequelize.DECIMAL(10, 8),
+        allowNull: false,
+      },
+      longitude: {
+        type: Sequelize.DECIMAL(11, 8),
+        allowNull: false,
       },
       createdAt: {
         allowNull: false,

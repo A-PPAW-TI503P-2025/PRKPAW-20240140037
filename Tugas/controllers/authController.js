@@ -20,7 +20,7 @@ exports.register = async (req, res) => {
       nama,
       email,
       password: hashedPassword,
-      role: role || 'mahasiswa' 
+      role: role
     });
 
     res.status(201).json({
@@ -60,16 +60,6 @@ exports.login = async (req, res) => {
     const token = jwt.sign(payload, JWT_SECRET, {
       expiresIn: '1h' 
     });
-
-    const cookieOptions = {
-    httpOnly: true, // Mencegah JavaScript klien mengakses cookie
-    secure: process.env.NODE_ENV === 'production', // Kirim hanya lewat HTTPS (nonaktifkan di localhost)
-    sameSite: 'strict', // Mencegah serangan CSRF
-    maxAge: 24 * 60 * 60 * 1000 // Waktu kedaluwarsa cookie (1 hari)
-  };
-
-    // save token to user session or database if needed
-    res.cookie('token', token, cookieOptions);
 
     res.json({
       message: "Login berhasil",

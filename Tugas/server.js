@@ -1,12 +1,15 @@
 const express = require('express');
 const app = express();
-const port = 3001;
+const port = 8080;
 
 require('./helpers/db');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
-app.use(cors());
+app.use(cors(
+    {origin: 'http://localhost:3000', credentials: true}
+));
+app.use(cookieParser());
 
 const { checkAuth, isAdmin, addUserData } = require('./middleware/check');
 
