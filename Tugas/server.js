@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const port = 8080;
+const path = require('path');
 
 require('./helpers/db');
 const cookieParser = require('cookie-parser');
@@ -25,6 +26,8 @@ app.use('/api/books', checkAuth, addUserData, booksRouter);
 app.use('/api/presensi', [checkAuth, addUserData], presensiRouter);
 app.use('/api/report', [checkAuth, addUserData, isAdmin], reportRouter);
 app.use('/api/auth', authRouter);
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);

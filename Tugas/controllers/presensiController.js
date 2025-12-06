@@ -1,6 +1,30 @@
 const { Presensi } = require("../models");
 const { format } = require("date-fns");
 const timeZone = "Asia/Jakarta";
+const multer = require("multer");
+const path = require("path");
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); 
+  },
+  filename: (req, file, cb) => {
+    // Format nama file: userId-timestamp.jpg
+    cb(null, `${req.user.id}-${Date.now()}${path.extname(file.originalname)}`);
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Hanya file gambar yang diperbolehkan!'), false);
+  }
+};
+
+exports.upload = multer({ storage: storage, fileFilter: fileFilter });
+
+
 
 const CheckIn = async (req, res) => {
   try {
@@ -15,38 +39,32 @@ const CheckIn = async (req, res) => {
     const { id: userId, nama: userName } = req.user;
     const { latitude, longitude } = req.body;
     const waktuSekarang = new Date();
-
-    // 3. Ubah cara mencari data menggunakan 'findOne' dari Sequelize
-    const existingRecord = await Presensi.findOne({
-      where: { userId: userId, checkOut: null },
-    });
-
-    if (existingRecord) {
-      return res
-        .status(400)
-        .json({ message: "Anda sudah melakukan check-in hari ini." });
+    
+    let buktiFotoPath = null;
+    if (req.file) {
+      buktiFotoPath = req.file.path; 
     }
-
-    // 4. Ubah cara membuat data baru menggunakan 'create' dari Sequelize
+    
     const newRecord = await Presensi.create({
       userId: userId,
       checkIn: waktuSekarang,
       latitude: latitude,
       longitude: longitude,
+      buktiFoto: buktiFotoPath 
     });
-
+    
     const formattedData = {
       userId: newRecord.userId,
       checkIn: format(newRecord.checkIn, "yyyy-MM-dd HH:mm:ssXXX", {
         timeZone,
       }),
-      checkOut: null,
       latitude: newRecord.latitude,
       longitude: newRecord.longitude,
+      buktiFoto: newRecord.buktiFoto 
     };
-
+    
     res.status(201).json({
-      message: `Halo ${userName}, check-in Anda berhasil pada pukul ${format(
+      message: `Selamat datang ${userName}, check-in Anda berhasil pada pukul ${format(
         waktuSekarang,
         "HH:mm:ss",
         { timeZone }
@@ -57,9 +75,9 @@ const CheckIn = async (req, res) => {
     res
       .status(500)
       .json({ message: "Terjadi kesalahan pada server", error: error.message });
-    console.log(error);
   }
 };
+
 const CheckOut = async (req, res) => {
   // Gunakan try...catch
   try {

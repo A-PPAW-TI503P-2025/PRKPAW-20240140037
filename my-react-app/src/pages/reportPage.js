@@ -328,6 +328,9 @@ function ReportPage() {
                           Nama
                         </th>
                         <th className="px-6 py-4 text-left text-sm font-bold text-gray-800">
+                          Foto
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-bold text-gray-800">
                           Check-In
                         </th>
                         <th className="px-6 py-4 text-left text-sm font-bold text-gray-800">
@@ -370,6 +373,32 @@ function ReportPage() {
                                 )}, ${parseFloat(record.longitude).toFixed(4)}`
                               : "-"}
                           </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            {(() => {
+                              const buktiPath =
+                                record.buktiFoto ||
+                                record.bukti_foto ||
+                                record.bukti ||
+                                null;
+                              if (!buktiPath) return "-";
+                              const imgUrl = buktiPath.startsWith("/")
+                                ? `http://localhost:8080${buktiPath}`
+                                : `http://localhost:8080/${buktiPath}`;
+                              return (
+                                <a
+                                  href={imgUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  <img
+                                    src={imgUrl}
+                                    alt={`bukti-${record.id}`}
+                                    className="w-16 h-12 object-cover rounded"
+                                  />
+                                </a>
+                              );
+                            })()}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -395,6 +424,34 @@ function ReportPage() {
                         {record.User?.nama || "N/A"}
                       </p>
                       <div className="space-y-2 text-sm text-gray-700">
+                        {(() => {
+                          const buktiPath =
+                            record.buktiFoto ||
+                            record.bukti_foto ||
+                            record.bukti ||
+                            null;
+                          if (buktiPath) {
+                            const imgUrl = buktiPath.startsWith("/")
+                              ? `http://localhost:8080${buktiPath}`
+                              : `http://localhost:8080/${buktiPath}`;
+                            return (
+                              <div className="mb-3">
+                                <a
+                                  href={imgUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  <img
+                                    src={imgUrl}
+                                    alt={`bukti-${record.id}`}
+                                    className="w-full h-40 object-cover rounded-md mb-2"
+                                  />
+                                </a>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
                         <p>
                           <span className="font-semibold">Check-In:</span>{" "}
                           {new Date(record.checkIn).toLocaleString("id-ID")}

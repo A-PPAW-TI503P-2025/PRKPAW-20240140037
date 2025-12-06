@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import axios from "axios";
 import PopUp from "../components/popUpComponents";
 import { usePopup } from "../hooks/usePopup";
+import Webcam from "react-webcam";
 
 function DashboardPage() {
   const navigate = useNavigate();
@@ -13,6 +14,13 @@ function DashboardPage() {
   const { isSuccess, message, showPopup, showNotification, handleClosePopup } =
     usePopup();
   const token = localStorage.getItem("token");
+  const webcamRef = useRef(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const [capturedImage, setCapturedImage] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [lastPhotoUrl, setLastPhotoUrl] = useState(null);
+  const [adminRecords, setAdminRecords] = useState([]);
+  const [adminLoading, setAdminLoading] = useState(false);
 
   const config = {
     headers: {
@@ -25,29 +33,86 @@ function DashboardPage() {
     navigate("/login");
   };
 
-  const handleCheckIn = async () => {
+  // Open camera modal for check-in
+  const handleCheckIn = () => {
+    if (!coords) {
+      showNotification(
+        "Lokasi belum tersedia. Mohon izinkan akses lokasi.",
+        false
+      );
+      return;
+    }
+    setShowCamera(true);
+  };
+
+  const handleCancelCamera = () => {
+    setCapturedImage(null);
+    setShowCamera(false);
+  };
+
+  const handleCapture = () => {
+    if (!webcamRef.current) return;
+    const imageSrc = webcamRef.current.getScreenshot();
+    setCapturedImage(imageSrc);
+  };
+
+  const dataUrlToBlob = (dataUrl) => {
+    const arr = dataUrl.split(",");
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  };
+
+  const handleSubmitCaptured = async () => {
+    if (!capturedImage) {
+      showNotification("Silakan ambil foto terlebih dahulu", false);
+      return;
+    }
+    setUploading(true);
     try {
-      if (!coords) {
-        showNotification(
-          "Lokasi belum tersedia. Mohon izinkan akses lokasi.",
-          false
-        );
-        return;
+      const formData = new FormData();
+      const blob = dataUrlToBlob(capturedImage);
+      formData.append("buktiFoto", blob, `bukti-${Date.now()}.jpg`);
+      formData.append("latitude", coords.lat);
+      formData.append("longitude", coords.lng);
+
+      const response = await axios.post(
+        "http://localhost:8080/api/presensi/checkin",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      // If backend returns the stored buktiFoto path, build static URL
+      const buktiPath = response?.data?.data?.buktiFoto;
+      if (buktiPath) {
+        const url = buktiPath.startsWith("/")
+          ? `http://localhost:8080${buktiPath}`
+          : `http://localhost:8080/${buktiPath}`;
+        setLastPhotoUrl(url);
       }
 
-      await axios.post(
-        "http://localhost:8080/api/presensi/checkin",
-        { latitude: coords.lat, longitude: coords.lng },
-        config
-      );
       showNotification("Check-in berhasil!", true);
+      setCapturedImage(null);
+      setShowCamera(false);
     } catch (error) {
-      console.log(error);
+      console.log("Error uploading check-in with photo:", error);
       showNotification(
         "Check-in gagal: " +
           (error.response ? error.response.data.message : error.message),
         false
       );
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -95,6 +160,25 @@ function DashboardPage() {
       try {
         const decodeToken = jwtDecode(token);
         setDataUser(decodeToken);
+        // If admin, load recent presensi with thumbnails
+        if (decodeToken.role === "admin") {
+          (async () => {
+            setAdminLoading(true);
+            try {
+              const resp = await axios.get(
+                "http://localhost:8080/api/report/daily",
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                }
+              );
+              setAdminRecords(resp.data.data || []);
+            } catch (err) {
+              console.log("Error fetching admin presensi:", err);
+            } finally {
+              setAdminLoading(false);
+            }
+          })();
+        }
       } catch (error) {
         console.log(error);
       }
@@ -237,6 +321,70 @@ function DashboardPage() {
                     ✓ Check-Out
                   </button>
                 </div>
+
+                {/* Camera Modal */}
+                {showCamera && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                    <div className="bg-white rounded-xl p-6 w-full max-w-2xl">
+                      <h4 className="text-lg font-semibold mb-4">
+                        Ambil Foto untuk Check-In
+                      </h4>
+                      {!capturedImage ? (
+                        <div className="flex flex-col items-center gap-4">
+                          <Webcam
+                            audio={false}
+                            ref={webcamRef}
+                            screenshotFormat="image/jpeg"
+                            className="w-full rounded-lg"
+                          />
+                          <div className="flex gap-3">
+                            <button
+                              onClick={handleCapture}
+                              className="px-4 py-2 bg-indigo-600 text-white rounded-md"
+                            >
+                              Ambil Foto
+                            </button>
+                            <button
+                              onClick={() => setShowCamera(false)}
+                              className="px-4 py-2 bg-gray-300 rounded-md"
+                            >
+                              Batal
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-4">
+                          <img
+                            src={capturedImage}
+                            alt="preview"
+                            className="w-full rounded-lg"
+                          />
+                          <div className="flex gap-3">
+                            <button
+                              onClick={() => setCapturedImage(null)}
+                              className="px-4 py-2 bg-yellow-400 text-black rounded-md"
+                            >
+                              Ambil Ulang
+                            </button>
+                            <button
+                              onClick={handleSubmitCaptured}
+                              disabled={uploading}
+                              className="px-4 py-2 bg-green-600 text-white rounded-md"
+                            >
+                              {uploading ? "Mengirim..." : "Kirim & Check-In"}
+                            </button>
+                            <button
+                              onClick={handleCancelCamera}
+                              className="px-4 py-2 bg-gray-300 rounded-md"
+                            >
+                              Batal
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -269,6 +417,20 @@ function DashboardPage() {
                     </p>
                     <p className="text-green-600 font-bold">Online</p>
                   </div>
+                  {lastPhotoUrl && (
+                    <div className="border-t border-indigo-200 pt-4">
+                      <p className="text-indigo-600 font-semibold text-xs mb-1">
+                        Bukti Check-In Terakhir
+                      </p>
+                      <a href={lastPhotoUrl} target="_blank" rel="noreferrer">
+                        <img
+                          src={lastPhotoUrl}
+                          alt="bukti-checkin"
+                          className="w-32 h-32 object-cover rounded-lg border"
+                        />
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
