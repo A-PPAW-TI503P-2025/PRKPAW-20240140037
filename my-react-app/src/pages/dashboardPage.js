@@ -206,6 +206,12 @@ function DashboardPage() {
               </button>
             )}
             <button
+              onClick={() => navigate("/monitoring")}
+              className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 active:scale-95 shadow-lg transition duration-200"
+            >
+              🌡️ IoT Monitoring
+            </button>
+            <button
               onClick={handleLogout}
               className="px-6 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 active:scale-95 shadow-lg transition duration-200"
             >
