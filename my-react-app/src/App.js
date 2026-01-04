@@ -4,6 +4,7 @@ import LoginPage from "./pages/loginPage";
 import RegisterPage from "./pages/registerPage";
 import DashboardPage from "./pages/dashboardPage";
 import ReportPage from "./pages/reportPage";
+import SensorPage from "./pages/SensorPage";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/report" element={<ReportPage />} />
+        <Route path="/monitoring" element={<SensorPage />} />
         <Route path="/" element={<LoginPage />} />
       </Routes>
     </Router>
